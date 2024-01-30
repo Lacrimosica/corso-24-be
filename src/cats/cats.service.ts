@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CreateCatDto } from './dto/create-cat.dto';
 import { UpdateCatDto } from './dto/update-cat.dto';
-import { Cat } from './entities/cat.entity';
+import { CatEntity } from './entities/cat.entity';
 
 @Injectable()
 export class CatsService {
@@ -11,7 +11,7 @@ export class CatsService {
     this.cats.push({ id: 3, name: 'Cat 3', age: 3 });
   }
 
-  private readonly cats: Cat[] = [];
+  private readonly cats: CatEntity[] = [];
 
   create(createCatDto: CreateCatDto) {
     this.cats.push(createCatDto);
