@@ -3,7 +3,7 @@ import { CreateCatDto } from './dto/create-cat.dto';
 import { UpdateCatDto } from './dto/update-cat.dto';
 import { CatEntity } from './entities/cat.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { CustomException } from 'src/custom.exception';
 @Injectable()
@@ -15,16 +15,28 @@ export class CatsService {
 
   async create(createCatDto: CreateCatDto) {
     let cat;
-    // try {
     cat = await this.catRepository.save(createCatDto);
-    // } catch (error) {
-    //   throw new CustomException();
-    // }
     return this.findOne(cat.id);
   }
 
-  async findAll() {
-    const cats = await this.catRepository.find();
+  async findAll(page: number, limit: number) {
+    console.log('siamo in service : findAll');
+    console.log('page: ' + page);
+    console.log('limit: ' + limit);
+
+    const cats = await this.catRepository.find(
+      //limit/take/quanti prendere : 10
+      //skip : quanti da skippare
+
+      //page :0 da skippare 0
+      //page : 1 da skippare 10
+      //page: 2 da skippare 20
+      {
+        skip: page * limit,
+        take: limit,
+      },
+    );
+
     if (cats.length === 0) {
       throw new HttpException({}, HttpStatus.NO_CONTENT);
     }
@@ -39,8 +51,9 @@ export class CatsService {
     });
 
     if (!cat) {
-      throw new NotFoundException();
+      throw new NotFoundException(`Cat #${catId} not found`);
     }
+
     return cat;
   }
 
