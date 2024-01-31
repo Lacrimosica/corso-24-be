@@ -1,11 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  MethodNotAllowedException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateCatDto } from './dto/create-cat.dto';
 import { UpdateCatDto } from './dto/update-cat.dto';
 import { CatEntity } from './entities/cat.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Repository } from 'typeorm';
 import { HttpException, HttpStatus } from '@nestjs/common';
-import { CustomException } from 'src/custom.exception';
+import { NoContentExcpeption } from 'src/common/no-content.exception';
 @Injectable()
 export class CatsService {
   constructor(
@@ -20,10 +24,6 @@ export class CatsService {
   }
 
   async findAll(page: number, limit: number) {
-    console.log('siamo in service : findAll');
-    console.log('page: ' + page);
-    console.log('limit: ' + limit);
-
     const cats = await this.catRepository.find(
       //limit/take/quanti prendere : 10
       //skip : quanti da skippare
@@ -34,12 +34,34 @@ export class CatsService {
       {
         skip: page * limit,
         take: limit,
+
+        // where: {
+        //   age: 90,
+        // },
+        //fare ordinamento prima di fare la paginazione,
+        //l'elenco di risultati inziera o dal primo elemento o dall'ultimo
+
+        // order: {
+        //   id: 'DESC',
+        // },
+
+        //selezionare solo alcuni campi
+        select: ['id', 'name'],
       },
     );
 
+    //ordinamento in maniera descndente, fuori dal db
+    cats.sort((a, b) => {
+      //ordine decrescente
+      return b.id - a.id;
+      //ordine crescente
+      //return a.id - b.id;
+    });
+
     if (cats.length === 0) {
-      throw new HttpException({}, HttpStatus.NO_CONTENT);
+      throw new NoContentExcpeption();
     }
+
     return cats;
   }
 

@@ -14,6 +14,7 @@ export class CatEntity {
 
   @Column({
     name: 'age',
+    type: 'int',
   })
   age: number;
 }

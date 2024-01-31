@@ -1,6 +1,7 @@
 import { Controller, Get, HttpException } from '@nestjs/common';
 import { AppService } from './app.service';
-import { CustomException } from './custom.exception';
+
+import { v1, v3, v4, v5 } from 'uuid';
 
 @Controller()
 export class AppController {
@@ -8,7 +9,6 @@ export class AppController {
 
   @Get('ping')
   ping() {
-    // throw new HttpException('this is custom', 300);
-    throw new CustomException();
+    return 'pong';
   }
 }
