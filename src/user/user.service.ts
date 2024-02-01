@@ -3,49 +3,84 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from './entities/user.entity';
-import { FindOptions, Repository } from 'typeorm';
-import { CatEntity } from 'src/cats/entities/cat.entity';
-import { LessThan } from 'typeorm';
-
+import { Repository } from 'typeorm';
+import { HttpException, HttpStatus } from '@nestjs/common';
 @Injectable()
+//FrontEnd <--> BackEnd: (controller ---> service ---> repository <---> entity <--typeorm--> database)
 export class UserService {
-  //FrontEnd <--> BackEnd: (controller ---> service ---> repository <---> entity <--typeorm--> database)
-
+  private alphabetKey =
+    'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890+*é-.,<>@#:;?ì^';
   constructor(
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
   ) {}
 
-  fixedToken = 'kjansldkubfbsdkòcjs<kfw.asdasdaiushdiasd.asdoahsdugaisuda';
-
-  create(createUserDto: CreateUserDto) {
-    createUserDto.token = this.fixedToken;
-    return this.userRepository.save(createUserDto);
+  hashingPassword(password: string) {
+    const arr = password.split('');
+    let hash = '';
+    for (let i = 0; i < arr.length; i++) {
+      const char = arr[i];
+      const index = this.alphabetKey.indexOf(char);
+      if (index) {
+        hash += String(index);
+      }
+    }
+    return hash;
   }
 
-  findAll() {
-    return this.userRepository.find({
-      select: ['userId', 'email', 'age'],
+  async create(createUserDto: CreateUserDto) {
+    const password = createUserDto.password;
+    const hashPass = this.hashingPassword(password);
+    createUserDto.password = hashPass;
+    console.log(hashPass);
+    const user = await this.userRepository.save(createUserDto);
+    return user;
+  }
+
+  async findAll() {
+    const users = await this.userRepository.find({
+      select: ['name', 'surname', 'email'],
     });
+    return users;
   }
 
-  findOne(id: number) {
-    return this.userRepository.findOne({ where: { userId: id } });
-  }
-
-  findOneByAge(age: number) {
-    return this.userRepository.find({
+  async findOne(userId: number) {
+    const singleUser = await this.userRepository.findOne({
       where: {
-        age: LessThan(age),
+        userId: userId,
       },
+      select: ['name', 'surname', 'email'], //cosi selezioniamo solo i campi desiderati
     });
+    return singleUser;
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return this.userRepository.update({ userId: id }, updateUserDto);
+  update(userId: number, updateUserDto: UpdateUserDto) {
+    this.userRepository.update(
+      {
+        userId: userId,
+      },
+      updateUserDto,
+    );
   }
 
   remove(id: number) {
-    return this.userRepository.delete({ userId: id });
+    this.userRepository.delete(id);
+  }
+
+  async login(email: string, password: string) {
+    const user = await this.userRepository.findOne({
+      where: {
+        email: email,
+      },
+    });
+    if (this.hashingPassword(password) === user.password) {
+      console.log(`sei riuscito a fare il login, benvenuto ${email}`);
+    } else {
+      throw new HttpException(
+        'email o password sbagliate',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+    return user;
   }
 }
