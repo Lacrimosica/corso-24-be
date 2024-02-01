@@ -11,6 +11,8 @@ export class PaginationMiddleware implements NestMiddleware {
     // console.log(req.url);
     // console.log(req.query);
 
+    // console.log('middlewar', req.body);
+
     if (req.method === 'DELETE') {
       res.status(HttpStatus.METHOD_NOT_ALLOWED);
       res.json({ message: 'AL MOMENTO NON SI PUO CANCELLARE COSE' });
